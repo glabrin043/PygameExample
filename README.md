@@ -1,4 +1,4 @@
-# PygameExample
+# Pygame Example
 
 Para desarrollar nuestro juego vamos a usar un “paquete” de python que se llama PyGame
 
@@ -17,5 +17,16 @@ Si tira error probar con: python -m pip install -U pygame --user
 
 La página de PyGame para leer tutoriales u otras cosas: https://www.pygame.org/docs/
 
+Para nuestro juego vamos a necesitar algunas imágenes y sonidos que podemos descargar del link: 
 Repositorio de recursos: https://github.com/swapagarwal/bunnies-and-badgers/tree/master
+
+Vamos a crear una carpeta nueva donde vamos a guardar nuestro juego
+Dentro de esta carpeta vamos a extraer el zip que bajamos recién
+Nos debería quedar así:
+Pygame
+|_ juego.py
+|_ Recursos
+   |_ Audios
+   |_ Imágenes
+   
 
