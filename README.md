@@ -24,9 +24,9 @@ Vamos a crear una carpeta nueva donde vamos a guardar nuestro juego
 Dentro de esta carpeta vamos a extraer el zip que bajamos recién
 Nos debería quedar así:
 Pygame
-|_ juego.py
-|_ Recursos
-   |_ Audios
-   |_ Imágenes
+	|_ juego.py
+	|_ Recursos
+   	|_ Audios
+   	|_ Imágenes
    
 
