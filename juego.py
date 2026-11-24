@@ -1,137 +1,300 @@
-import pygame as pg
+"""
+Juego: Conejos y Tejones
+Basado en la presentación "Python II".
+
+Controles:
+- W / flecha arriba: mover hacia arriba.
+- A / flecha izquierda: mover hacia la izquierda.
+- S / flecha abajo: mover hacia abajo.
+- D / flecha derecha: mover hacia la derecha.
+- Clic izquierdo: disparar una flecha.
+- Cerrar la ventana: salir del juego.
+"""
+
 import os
+import sys
+import math
 import random
+
+import pygame as pg
+
+
+# ---------------------------------------------------------------------
+# 1. Inicialización del juego
+# ---------------------------------------------------------------------
 
 pg.init()
 
-width, heigth = 840,480
-screen = pg.display.set_mode(width,heigth)
+# Dimensiones de la ventana.
+width, height = 640, 480
+screen = pg.display.set_mode((width, height))
+pg.display.set_caption("Conejos y Tejones")
+
+# Control de la velocidad de actualización del juego.
+clock = pg.time.Clock()
+FPS = 60
+
+# Estado de las teclas W, A, S y D, en ese orden.
 keys = [False, False, False, False]
-playerpos=[100,100]
 
-badtimer=100
-badtimer1=0
-badguys=[[640,100]]
-healthvalue=194
+# Posición inicial del jugador.
+playerpos = [100, 100]
 
-badguyimg1 = pygame.image.load("resources/images/badguy.png")
-badguyimg=badguyimg1
+# Variables para registrar los disparos:
+# acc[0] = cantidad de aciertos; acc[1] = cantidad de disparos.
+acc = [0, 0]
+arrows = []
 
-path_player_image = os.path.join("resources", "images", "dude.png")
-player = pygame.image.load(path_player_image)
+# Variables para controlar la aparición de los tejones.
+badtimer = 100
+badtimer1 = 0
+badguys = [[640, 100]]
 
-grass = pygame.image.load("resources/images/grass.png")
-castle = pygame.image.load("resources/images/castle.png")
+# Salud inicial.
+healthvalue = 194
 
 
-for x in range(int(width/grass.get_width()+1)):
-        for y in range(int(height/grass.get_height()+1)):
-            screen.blit(grass,(x*100,y*100))
-            
-screen.blit(castle,(0,30))
-screen.blit(castle,(0,135))
-screen.blit(castle,(0,240))
-screen.blit(castle,(0,345 ))
+# ---------------------------------------------------------------------
+# 2. Carga de imágenes
+# ---------------------------------------------------------------------
 
-while 1:
-    screen.fill(0) #Colocar en color negro el fondo de pantalla
-    screen.blit(player, playerpos)
-    badtimer-=1
-    acc=[0,0]
-    arrows=[]
-    
-    for bullet in arrows:
-        index=0
-        velx=math.cos(bullet[0])*10
-        vely=math.sin(bullet[0])*10
-        bullet[1]+=velx
-        bullet[2]+=vely
-        if bullet[1]<-64 or bullet[1]>640 or bullet[2]<-64 or bullet[2]>480:
-            arrows.pop(index)
-        index+=1
-        for projectile in arrows:
-            arrow1 = pygame.transform.rotate(arrow, 360-projectile[0]*57.29)
-            screen.blit(arrow1, (projectile[1], projectile[2]))
+# Construimos las rutas a partir de la carpeta donde está este archivo.
+# La estructura esperada es:
+# carpeta_del_juego/
+#   juego.py
+#   resources/
+#       images/
+#           dude.png
+#           grass.png
+#           castle.png
+#           bullet.png
+#           badguy.png
 
-    pg.display.flip() 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGE_DIR = os.path.join(BASE_DIR, "resources", "images")
+
+
+def cargar_imagen(nombre):
+    """Carga una imagen ubicada en resources/images."""
+    ruta = os.path.join(IMAGE_DIR, nombre)
+    return pg.image.load(ruta).convert_alpha()
+
+
+player = cargar_imagen("dude.png")
+grass = cargar_imagen("grass.png")
+castle = cargar_imagen("castle.png")
+arrow = cargar_imagen("bullet.png")
+badguyimg = cargar_imagen("badguy.png")
+
+
+# ---------------------------------------------------------------------
+# 3. Función para dibujar el paisaje
+# ---------------------------------------------------------------------
+
+def dibujar_paisaje():
+    """Cubre la pantalla con pasto y dibuja los castillos."""
+    # Repetimos el pasto hasta cubrir toda la ventana.
+    for x in range((width // grass.get_width()) + 1):
+        for y in range((height // grass.get_height()) + 1):
+            screen.blit(grass, (x * grass.get_width(),
+                                y * grass.get_height()))
+
+    # Ubicamos los castillos en el lado izquierdo de la pantalla.
+    screen.blit(castle, (0, 30))
+    screen.blit(castle, (0, 135))
+    screen.blit(castle, (0, 240))
+    screen.blit(castle, (0, 345))
+
+
+# ---------------------------------------------------------------------
+# 4. Bucle principal del juego
+# ---------------------------------------------------------------------
+
+running = True
+
+while running:
+
+    # -------------------------------------------------------------
+    # 4.1. Revisar los eventos del juego
+    # -------------------------------------------------------------
 
     for event in pg.event.get():
-        if event.type == pg.QUIT
-            pg.quit()
-            exit
-        
-        if event.type == pygame.KEYDOWN:
-            if event.key==K_w:
-                keys[0]=True
-            elif event.key==K_a:
-                keys[1]=True
-            elif event.key==K_s:
-                keys[2]=True
-            elif event.key==K_d:
-                keys[3]=True
-                
-        if event.type == pygame.KEYUP:
-            if event.key==pygame.K_w:
-                keys[0]=False
-            elif event.key==pygame.K_a:
-                keys[1]=False
-            elif event.key==pygame.K_s:
-                keys[2]=False
-            elif event.key==pygame.K_d:
-                keys[3]=False
 
-        if keys[0]:
-                playerpos[1]-=5
-        elif keys[2]:
-                playerpos[1]+=5
-        if keys[1]:
-                playerpos[0]-=5
-        elif keys[3]:
-                playerpos[0]+=5
+        # Si se cierra la ventana, terminamos el juego.
+        if event.type == pg.QUIT:
+            running = False
 
-        if event.type==pygame.MOUSEBUTTONDOWN:
-            position=pygame.mouse.get_pos()
-            acc[1]+=1
-            arrows.append([math.atan2(position[1]-(playerpos1[1]+32),position[0]-(playerpos1[0]+26)),playerpos1[0]+32,playerpos1[1]+32])
+        # Detectamos cuando se presiona una tecla.
+        elif event.type == pg.KEYDOWN:
+            if event.key in (pg.K_w, pg.K_UP):
+                keys[0] = True
+            elif event.key in (pg.K_a, pg.K_LEFT):
+                keys[1] = True
+            elif event.key in (pg.K_s, pg.K_DOWN):
+                keys[2] = True
+            elif event.key in (pg.K_d, pg.K_RIGHT):
+                keys[3] = True
 
-        if badtimer==0:
-        badguys.append([640, random.randint(50,430)])
-        badtimer=100-(badtimer1*2)
-        if badtimer1>=35:
-            badtimer1=35
+        # Detectamos cuando se deja de presionar una tecla.
+        elif event.type == pg.KEYUP:
+            if event.key in (pg.K_w, pg.K_UP):
+                keys[0] = False
+            elif event.key in (pg.K_a, pg.K_LEFT):
+                keys[1] = False
+            elif event.key in (pg.K_s, pg.K_DOWN):
+                keys[2] = False
+            elif event.key in (pg.K_d, pg.K_RIGHT):
+                keys[3] = False
+
+        # Cuando se hace clic con el mouse, creamos una flecha.
+        elif event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                mouse_position = pg.mouse.get_pos()
+
+                # Calculamos el ángulo entre el jugador y el mouse.
+                angle = math.atan2(
+                    mouse_position[1] - (playerpos[1] + 32),
+                    mouse_position[0] - (playerpos[0] + 26)
+                )
+
+                # Guardamos el ángulo y la posición inicial de la flecha.
+                arrows.append([
+                    angle,
+                    playerpos[0] + 32,
+                    playerpos[1] + 32
+                ])
+
+                # Registramos un disparo.
+                acc[1] += 1
+
+    # -------------------------------------------------------------
+    # 4.2. Actualizar la posición del jugador
+    # -------------------------------------------------------------
+
+    # El jugador se mueve 5 píxeles según las teclas presionadas.
+    if keys[0]:
+        playerpos[1] -= 5
+    if keys[2]:
+        playerpos[1] += 5
+    if keys[1]:
+        playerpos[0] -= 5
+    if keys[3]:
+        playerpos[0] += 5
+
+    # Evitamos que el conejo salga de los límites de la pantalla.
+    playerpos[0] = max(0, min(playerpos[0], width - player.get_width()))
+    playerpos[1] = max(0, min(playerpos[1], height - player.get_height()))
+
+    # -------------------------------------------------------------
+    # 4.3. Dibujar el paisaje y rotar al conejo
+    # -------------------------------------------------------------
+
+    dibujar_paisaje()
+
+    # Obtenemos la posición del mouse para calcular hacia dónde mira.
+    position = pg.mouse.get_pos()
+
+    angle = math.atan2(
+        position[1] - (playerpos[1] + 32),
+        position[0] - (playerpos[0] + 26)
+    )
+
+    # Convertimos el ángulo de radianes a grados y rotamos la imagen.
+    playerrot = pg.transform.rotate(player, 360 - angle * 57.29)
+
+    # Ajustamos la posición para que la rotación no desplace al jugador.
+    playerpos1 = (
+        playerpos[0] - playerrot.get_rect().width / 2,
+        playerpos[1] - playerrot.get_rect().height / 2
+    )
+
+    screen.blit(playerrot, playerpos1)
+
+    # -------------------------------------------------------------
+    # 5. Actualizar y dibujar las flechas
+    # -------------------------------------------------------------
+
+    for bullet in arrows[:]:
+        # Calculamos la velocidad horizontal y vertical de la flecha.
+        velx = math.cos(bullet[0]) * 10
+        vely = math.sin(bullet[0]) * 10
+
+        # Actualizamos su posición.
+        bullet[1] += velx
+        bullet[2] += vely
+
+        # Eliminamos la flecha cuando sale de la pantalla.
+        if (bullet[1] < -64 or bullet[1] > width or
+                bullet[2] < -64 or bullet[2] > height):
+            arrows.remove(bullet)
+            continue
+
+        # Rotamos la imagen de la flecha según su ángulo.
+        arrowrot = pg.transform.rotate(arrow, 360 - bullet[0] * 57.29)
+        screen.blit(arrowrot, (bullet[1], bullet[2]))
+
+    # -------------------------------------------------------------
+    # 6. Crear y mover los tejones
+    # -------------------------------------------------------------
+
+    # Disminuimos el temporizador en cada vuelta del bucle.
+    badtimer -= 1
+
+    # Cuando llega a cero, aparece un nuevo tejón.
+    if badtimer <= 0:
+        badguys.append([width, random.randint(50, 430)])
+
+        # A medida que avanza el juego, aparecen más seguido.
+        badtimer = 100 - (badtimer1 * 2)
+
+        if badtimer1 >= 35:
+            badtimer1 = 35
         else:
-            badtimer1+=5
-        index=0
+            badtimer1 += 5
 
-        for badguy in badguys:
-        if badguy[0]<-64:
-            badguys.pop(index)
-        badguy[0]-=7
-        index+=1
-        for badguy in badguys:
+    # Movemos los tejones hacia la izquierda.
+    for badguy in badguys[:]:
+        badguy[0] -= 7
+
+        # Si el tejón llega al castillo, reduce la salud.
+        badrect = badguyimg.get_rect(topleft=(badguy[0], badguy[1]))
+
+        if badrect.left < 64:
+            healthvalue -= random.randint(5, 20)
+            badguys.remove(badguy)
+            continue
+
+        # Dibujamos el tejón en su nueva posición.
         screen.blit(badguyimg, badguy)
 
-        # 6.3.1 - Attack castle
-        badrect=pygame.Rect(badguyimg.get_rect())
-        badrect.top=badguy[1]
-        badrect.left=badguy[0]
-        if badrect.left<64:
-            healthvalue -= random.randint(5,20)
-            badguys.pop(index)
-        # 6.3.3 - Next bad guy
+    # -------------------------------------------------------------
+    # 7. Detectar colisiones entre flechas y tejones
+    # -------------------------------------------------------------
 
-        index1=0
-        for bullet in arrows:
-            bullrect=pygame.Rect(arrow.get_rect())
-            bullrect.left=bullet[1]
-            bullrect.top=bullet[2]
+    for badguy in badguys[:]:
+        badrect = badguyimg.get_rect(topleft=(badguy[0], badguy[1]))
+
+        for bullet in arrows[:]:
+            bullrect = arrow.get_rect(topleft=(bullet[1], bullet[2]))
+
+            # Si la flecha toca al tejón, eliminamos a ambos.
             if badrect.colliderect(bullrect):
-                acc[0]+=1
-                badguys.pop(index)
-                arrows.pop(index1)
-            index1+=1
+                acc[0] += 1
+                badguys.remove(badguy)
+                arrows.remove(bullet)
+                break
+
+    # -------------------------------------------------------------
+    # 8. Actualizar la pantalla
+    # -------------------------------------------------------------
+
+    pg.display.flip()
+    clock.tick(FPS)
 
 
+# ---------------------------------------------------------------------
+# 9. Cerrar el juego
+# ---------------------------------------------------------------------
 
-
-    
+pg.quit()
+sys.exit()
